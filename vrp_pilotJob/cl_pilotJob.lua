@@ -17,6 +17,9 @@ Citizen.CreateThread(function()
         DrawMarker(33, pos.x, pos.y, pos.z, 0, 0, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 255, 128, 1, 0, 2, 1, 0, 0, 0)
 
         if distance < 1 then
+            SetNotificationTextEntry( "STRING" )
+            AddTextComponentString("Press ~g~E~w~ to get your plane")
+            DrawNotification( false, false )
             if IsControlJustReleased(0, 51) and not gotPlane then
                 local chance = math.random(1,2)
                 if chance == 1 then
