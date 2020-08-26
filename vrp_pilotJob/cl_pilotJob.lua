@@ -7,6 +7,8 @@ local deliveryPart1 = false
 local deliveryPart2 = false
 local completed = false
 local plane
+local started = false
+local status = false
 
 Citizen.CreateThread(function()
     local pos = Config.startJob
@@ -17,17 +19,19 @@ Citizen.CreateThread(function()
         DrawMarker(33, pos.x, pos.y, pos.z, 0, 0, 0, 0, 0, 0, 1.0, 1.0, 1.0, 0, 0, 255, 128, 1, 0, 2, 1, 0, 0, 0)
 
         if distance < 1 then
-            SetNotificationTextEntry( "STRING" )
-            AddTextComponentString("Press ~g~E~w~ to get your plane")
-            DrawNotification( false, false )
+            TriggerEvent('aircraftHeist:helpText', 'Press ~INPUT_CONTEXT~ to get your plane')
+            -- SetNotificationTextEntry( "STRING" )
+            -- AddTextComponentString("Press ~g~E~w~ to get your plane")
+            -- DrawNotification( false, false )
             if IsControlJustReleased(0, 51) and not gotPlane then
-                local chance = math.random(1,2)
+                local chance = math.random(1)
                 if chance == 1 then
                     type = "private"
                 else
                     type = "commercial"
                 end
                 spawn_plane(type)
+                started = true
 
             elseif IsControlJustReleased(0, 51) and gotPlane then
                 SetNotificationTextEntry( "STRING" )
@@ -69,24 +73,23 @@ Citizen.CreateThread(function()
                     if distance < 50 and not collectedPassengers then
                         --Citizen.Wait(1)
                         DrawMarker(27, pos.x, pos.y, pos.z, 0, 0, 0, 0, 0, 0, 30.0, 30.0, 30.0, 0, 0, 255, 128, 0, 0, 2, 0, 0, 0, 0)
-                        SetNotificationTextEntry( "STRING" )
-                        AddTextComponentString("Press ~g~E~w~ to pickup passengers")
-                        DrawNotification( false, false )
+                        TriggerEvent('aircraftHeist:helpText', 'Press ~INPUT_CONTEXT~ to board passengers')
                         if IsControlJustReleased(0, 51) and not collectedPassengers then
+                            FreezeEntityPosition(plane, true)
+                            toggle_doors()
                             if type == "private" and correctVehicle then
-                                while passengerCount <= 50 and distance < 50 do
+                                while passengerCount < 50 and distance < 50 do
                                     playerPos = GetEntityCoords(PlayerPedId(), true)
                                     distance = Vdist(playerPos.x, playerPos.y, playerPos.z, pos.x, pos.y, pos.z)
                                     Citizen.Wait(1000)
                                     passengerCount = passengerCount + 1
-                                    SetNotificationTextEntry( "STRING" )
-                                    AddTextComponentString("Boarding Passengers, Do Not Leave Until All Have Boarded")
-                                    DrawNotification( false, false )
+                                    msg = ('Passenger count: '..passengerCount)
+                                    TriggerEvent('aircraftHeist:helpText', msg)
                                 end
                                 collectedPassengers = true
                                 deliveryPart1 = true
                             elseif type == "commercial" and correctVehicle then
-                                while passengerCount <= 100 and distance < 50 do
+                                while passengerCount < 100 and distance < 50 do
                                     playerPos = GetEntityCoords(PlayerPedId(), true)
                                     distance = Vdist(playerPos.x, playerPos.y, playerPos.z, pos.x, pos.y, pos.z)
                                     Citizen.Wait(1000)
@@ -102,15 +105,16 @@ Citizen.CreateThread(function()
                                 AddTextComponentString("Not in your plane")
                                 DrawNotification( false, false )
                             end
-                        elseif IsControlJustReleased(0, 51) and collectedPassengers then
-                            SetNotificationTextEntry( "STRING" )
-                            AddTextComponentString("Your plane is full")
-                            DrawNotification( false, false )
+                            FreezeEntityPosition(plane, false)
+                            msg = ('Passenger count: '..passengerCount.." (FULL)")
+                            TriggerEvent('aircraftHeist:helpText', msg)
                         end
                         if collectedPassengers == true then
+                            toggle_doors()
+                            Citizen.Wait(5000)
                             break
                         end
-                    elseif distance > 50 and not collectedPassengers then
+                    elseif distance > 50 and not collectedPassengers and started then
                         SetNotificationTextEntry( "STRING" )
                         AddTextComponentString("Pickup passengers from one of the boarding points")
                         DrawNotification( false, false )
@@ -126,6 +130,13 @@ Citizen.CreateThread(function()
         Citizen.Wait(1000)
         TriggerServerEvent('pilotjob:checkVehicle', false)
     end
+end)
+
+RegisterNetEvent('aircraftHeist:helpText')
+AddEventHandler('aircraftHeist:helpText', function(msg)
+    BeginTextCommandDisplayHelp('STRING')
+    AddTextComponentSubstringPlayerName(msg)
+    EndTextCommandDisplayHelp(0, false, true, -1)
 end)
 
 Citizen.CreateThread(function()
@@ -145,9 +156,7 @@ Citizen.CreateThread(function()
             local distance = Vdist(playerPos.x, playerPos.y, playerPos.z, pos.x, pos.y, pos.z)
 
             if distance < 50 then
-                SetNotificationTextEntry( "STRING" )
-                AddTextComponentString("Press ~g~E~w~ to dropoff passengers")
-                DrawNotification( false, false )
+                TriggerEvent('aircraftHeist:helpText', 'Press ~INPUT_CONTEXT~ dropoff passengers')
                 if IsControlJustReleased(0, 51) and correctVehicle then
                     dropoff_passengers()
                 elseif IsControlJustReleased(0, 51) and not correctVehicle then
@@ -170,9 +179,7 @@ Citizen.CreateThread(function()
             local distance = Vdist(playerPos.x, playerPos.y, playerPos.z, pos.x, pos.y, pos.z)
 
             if distance < 50 then
-                SetNotificationTextEntry( "STRING" )
-                AddTextComponentString("Press ~g~E~w~ to dropoff passengers")
-                DrawNotification( false, false )
+                TriggerEvent('aircraftHeist:helpText', 'Press ~INPUT_CONTEXT~ dropoff passengers')
                 if IsControlJustReleased(0, 51) and correctVehicle then
                     dropoff_passengers()
                     RemoveBlip(blip)
@@ -207,13 +214,28 @@ function reset()
     deliveryPart1 = false
     deliveryPart2 = false
     completed = false
+    started = false
+end
+
+function toggle_doors()
+    status = not status
+    print("toggling doors")
+    if status then
+        SetVehicleDoorOpen(plane, 0, false, false)
+    else
+        SetVehicleDoorsShut(plane, 0)
+    end
 end
 
 function dropoff_passengers()
+    FreezeEntityPosition(plane, true)
+    toggle_doors()
     if type == "private" and deliveryPart1 and not deliveryPart2 then
         while passengerCount >= 25 do
             passengerCount = passengerCount - 1
             TriggerServerEvent('pilotjob:receivePayment')
+            msg = ('Passenger count: '..passengerCount)
+            TriggerEvent('aircraftHeist:helpText', msg)
             Citizen.Wait(1000)
         end
         deliveryPart1 = true
@@ -222,6 +244,8 @@ function dropoff_passengers()
         while passengerCount > 0 do
             passengerCount = passengerCount - 1
             TriggerServerEvent('pilotjob:receivePayment')
+            msg = ('Passenger count: '..passengerCount)
+            TriggerEvent('aircraftHeist:helpText', msg)
             Citizen.Wait(1000)
         end
         SetNotificationTextEntry( "STRING" )
@@ -233,6 +257,8 @@ function dropoff_passengers()
         while passengerCount >= 50 do
             passengerCount = passengerCount - 1
             TriggerServerEvent('pilotjob:receivePayment')
+            msg = ('Passenger count: '..passengerCount)
+            TriggerEvent('aircraftHeist:helpText', msg)
             Citizen.Wait(1000)
         end
         deliveryPart1 = true
@@ -241,6 +267,8 @@ function dropoff_passengers()
         while passengerCount > 0 do
             passengerCount = passengerCount - 1
             TriggerServerEvent('pilotjob:receivePayment')
+            msg = ('Passenger count: '..passengerCount)
+            TriggerEvent('aircraftHeist:helpText', msg)
             Citizen.Wait(1000)
         end
         SetNotificationTextEntry( "STRING" )
@@ -248,6 +276,8 @@ function dropoff_passengers()
         DrawNotification( false, false )
         reset()
         completed = true
+        toggle_doors()
+        FreezeEntityPosition(plane, false)
     end
 end
 
