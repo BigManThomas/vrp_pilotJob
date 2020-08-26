@@ -141,8 +141,6 @@ AddEventHandler('aircraftHeist:helpText', function(msg)
 end)
 
 Citizen.CreateThread(function()
-    local blip
-    local blip2
     while true do
         Citizen.Wait(5000)
         while gotPlane and collectedPassengers and deliveryPart1 and not deliveryPart2 do
@@ -152,7 +150,7 @@ Citizen.CreateThread(function()
             DrawNotification( false, false )
             local pos = Config.deliveryLocs.One
             DrawMarker(27, pos.x, pos.y, pos.z, 0, 0, 0, 0, 0, 0, 30.0, 30.0, 30.0, 0, 0, 255, 128, 0, 0, 2, 0, 0, 0, 0)
-            blip = AddBlipForCoord(pos.x, pos.y, pos.z)
+            SetNewWaypoint(pos.x, pos.y)
             local playerPos = GetEntityCoords(PlayerPedId(), true)
             local distance = Vdist(playerPos.x, playerPos.y, playerPos.z, pos.x, pos.y, pos.z)
 
@@ -167,7 +165,6 @@ Citizen.CreateThread(function()
                 end
             end
         end
-        RemoveBlip(blip)
         while gotPlane and collectedPassengers and deliveryPart1 and deliveryPart2 and not completed do
             Citizen.Wait(0)
             SetNotificationTextEntry( "STRING" )
@@ -175,7 +172,7 @@ Citizen.CreateThread(function()
             DrawNotification( false, false )
             local pos = Config.deliveryLocs.Two
             DrawMarker(27, pos.x, pos.y, pos.z, 0, 0, 0, 0, 0, 0, 30.0, 30.0, 30.0, 0, 0, 255, 128, 0, 0, 2, 0, 0, 0, 0)
-            blip2 = AddBlipForCoord(pos.x, pos.y, pos.z)
+            SetNewWaypoint(pos.x, pos.y)
             local playerPos = GetEntityCoords(PlayerPedId(), true)
             local distance = Vdist(playerPos.x, playerPos.y, playerPos.z, pos.x, pos.y, pos.z)
 
@@ -183,7 +180,6 @@ Citizen.CreateThread(function()
                 TriggerEvent('aircraftHeist:helpText', 'Press ~INPUT_CONTEXT~ dropoff passengers')
                 if IsControlJustReleased(0, 51) and correctVehicle then
                     dropoff_passengers()
-                    RemoveBlip(blip)
                 elseif IsControlJustReleased(0, 51) and not correctVehicle then
                     SetNotificationTextEntry( "STRING" )
                     AddTextComponentString("Not your plane")
@@ -191,8 +187,6 @@ Citizen.CreateThread(function()
                 end
             end
         end
-        RemoveBlip(blip)
-        RemoveBlip(blip2)
     end
 end)
 
