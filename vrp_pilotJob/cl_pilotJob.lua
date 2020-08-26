@@ -10,7 +10,7 @@ local plane
 local started = false
 local status = false
 
-Citizen.CreateThread(function()
+Citizen.CreateThread(function() -- adds the blue blip to get your aeroplane, and checks if you already have one out or not
     local pos = Config.startJob
     while true do
         Wait(0)
@@ -20,9 +20,6 @@ Citizen.CreateThread(function()
 
         if distance < 1 then
             TriggerEvent('aircraftHeist:helpText', 'Press ~INPUT_CONTEXT~ to get your plane')
-            -- SetNotificationTextEntry( "STRING" )
-            -- AddTextComponentString("Press ~g~E~w~ to get your plane")
-            -- DrawNotification( false, false )
             if IsControlJustReleased(0, 51) and not gotPlane then
                 local chance = math.random(1,2)
                 if chance == 1 then
@@ -42,7 +39,7 @@ Citizen.CreateThread(function()
     end
 end)
 
-Citizen.CreateThread(function()
+Citizen.CreateThread(function() -- if for some reason you decide to cancel the mission or want to use a different plane, you can  go to this blip and it will reset everything
     while true do
         Wait(0)
         local pos = Config.deletePlane
@@ -72,7 +69,6 @@ Citizen.CreateThread(function()
                     local distance = Vdist(playerPos.x, playerPos.y, playerPos.z, pos.x, pos.y, pos.z)
                     DrawMarker(27, pos.x, pos.y, pos.z, 0, 0, 0, 0, 0, 0, 30.0, 30.0, 30.0, 0, 0, 255, 128, 0, 0, 2, 0, 0, 0, 0)
                     if distance < 50 and not collectedPassengers then
-                        --Citizen.Wait(1)
                         DrawMarker(27, pos.x, pos.y, pos.z, 0, 0, 0, 0, 0, 0, 30.0, 30.0, 30.0, 0, 0, 255, 128, 0, 0, 2, 0, 0, 0, 0)
                         TriggerEvent('aircraftHeist:helpText', 'Press ~INPUT_CONTEXT~ to board passengers')
                         if IsControlJustReleased(0, 51) and not collectedPassengers then
@@ -126,7 +122,7 @@ Citizen.CreateThread(function()
     end
 end)
 
-Citizen.CreateThread(function()
+Citizen.CreateThread(function() -- checks if you are still in the vehicle you were given
     while true do
         Citizen.Wait(1000)
         TriggerServerEvent('pilotjob:checkVehicle', false)
@@ -140,7 +136,7 @@ AddEventHandler('aircraftHeist:helpText', function(msg)
     EndTextCommandDisplayHelp(0, false, true, -1)
 end)
 
-Citizen.CreateThread(function()
+Citizen.CreateThread(function() -- prompts/waypoints saying where you need to drop people off at
     while true do
         Citizen.Wait(5000)
         while gotPlane and collectedPassengers and deliveryPart1 and not deliveryPart2 do
@@ -194,7 +190,6 @@ RegisterNetEvent('pilotjob:checkVehicleResult')
 AddEventHandler('pilotjob:checkVehicleResult', function(vehicleName, set)
     if set == true then
         vehicle = vehicleName
-        print("set vehicle to "..vehicle)
     end
     if vehicleName == vehicle then
         correctVehicle = true
@@ -214,7 +209,6 @@ end
 
 function toggle_doors()
     status = not status
-    print("toggling doors")
     if status then
         SetVehicleDoorOpen(plane, 0, false, false)
     else
@@ -290,7 +284,6 @@ function spawn_plane(type)
         while not HasModelLoaded(modelHash) do
             RequestModel(modelHash)
             Citizen.Wait(1000)
-            print("loading model")
         end
         plane = CreateVehicle(modelHash, pos.x, pos.y, pos.z, pos.heading, true, false)
     else
@@ -298,7 +291,6 @@ function spawn_plane(type)
         while not HasModelLoaded(modelHash) do
             RequestModel(modelHash)
             Citizen.Wait(1000)
-            print("loading model")
         end
         plane = CreateVehicle(modelHash, pos.x, pos.y, pos.z, pos.heading, true, false)
     end
