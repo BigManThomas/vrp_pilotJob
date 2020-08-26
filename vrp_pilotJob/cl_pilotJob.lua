@@ -24,7 +24,7 @@ Citizen.CreateThread(function()
             -- AddTextComponentString("Press ~g~E~w~ to get your plane")
             -- DrawNotification( false, false )
             if IsControlJustReleased(0, 51) and not gotPlane then
-                local chance = math.random(1)
+                local chance = math.random(1,2)
                 if chance == 1 then
                     type = "private"
                 else
@@ -50,6 +50,7 @@ Citizen.CreateThread(function()
         local distance = Vdist(playerPos.x, playerPos.y, playerPos.z, pos.x, pos.y, pos.z)
         DrawMarker(27, pos.x, pos.y, pos.z, 0, 0, 0, 0, 0, 0, 30.0, 30.0, 30.0, 0, 0, 255, 128, 0, 0, 2, 0, 0, 0, 0)
         if distance < 50 then
+            TriggerEvent('aircraftHeist:helpText', 'Press ~INPUT_CONTEXT~ cancel mission')
             if IsControlJustReleased(0, 51) then
                 SetEntityAsMissionEntity(plane, true, true)
                 DeleteVehicle(plane)
@@ -231,7 +232,7 @@ function dropoff_passengers()
     FreezeEntityPosition(plane, true)
     toggle_doors()
     if type == "private" and deliveryPart1 and not deliveryPart2 then
-        while passengerCount >= 25 do
+        while passengerCount > 25 do
             passengerCount = passengerCount - 1
             TriggerServerEvent('pilotjob:receivePayment')
             msg = ('Passenger count: '..passengerCount)
@@ -240,6 +241,8 @@ function dropoff_passengers()
         end
         deliveryPart1 = true
         deliveryPart2 = true
+        toggle_doors()
+        FreezeEntityPosition(plane, false)
     elseif type == "private" and deliveryPart1 and deliveryPart2 then
         while passengerCount > 0 do
             passengerCount = passengerCount - 1
@@ -253,8 +256,10 @@ function dropoff_passengers()
         DrawNotification( false, false )
         reset()
         completed = true
+        toggle_doors()
+        FreezeEntityPosition(plane, false)
     elseif type == "commercial" and deliveryPart1 and not deliveryPart2 then
-        while passengerCount >= 50 do
+        while passengerCount > 50 do
             passengerCount = passengerCount - 1
             TriggerServerEvent('pilotjob:receivePayment')
             msg = ('Passenger count: '..passengerCount)
@@ -263,6 +268,8 @@ function dropoff_passengers()
         end
         deliveryPart1 = true
         deliveryPart2 = true
+        toggle_doors()
+        FreezeEntityPosition(plane, false)
     elseif type == "commercial" and deliveryPart1 and deliveryPart2 then
         while passengerCount > 0 do
             passengerCount = passengerCount - 1
